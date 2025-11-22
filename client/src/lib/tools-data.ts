@@ -55,7 +55,7 @@ export const toolCategories: ToolCategory[] = [
     name: "Text Tools",
     description: "Process and manipulate text content",
     icon: "Type",
-    toolCount: 5,
+    toolCount: 4,
     path: "/tools/text",
   },
   {
@@ -196,15 +196,6 @@ export const allTools: Tool[] = [
     category: "text",
     path: "/tool/case-converter",
     icon: "CaseSensitive",
-    isPro: false,
-  },
-  {
-    id: "remove-duplicates",
-    name: "Remove Duplicate Lines",
-    description: "Remove duplicate lines from text",
-    category: "text",
-    path: "/tool/remove-duplicates",
-    icon: "ListX",
     isPro: false,
   },
   {

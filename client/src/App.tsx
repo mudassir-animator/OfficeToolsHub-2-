@@ -30,7 +30,6 @@ import ImageCrop from "@/pages/tools/image-crop";
 import ImageConverter from "@/pages/tools/image-converter";
 import WordCounter from "@/pages/tools/word-counter";
 import CaseConverter from "@/pages/tools/case-converter";
-import DuplicateRemover from "@/pages/tools/duplicate-remover";
 import LoremIpsum from "@/pages/tools/lorem-ipsum";
 import GrammarChecker from "@/pages/tools/grammar-checker";
 import QrCode from "@/pages/tools/qr-code";
@@ -70,7 +69,6 @@ function Router() {
       <Route path="/tool/image-converter" component={ImageConverter} />
       <Route path="/tool/word-counter" component={WordCounter} />
       <Route path="/tool/case-converter" component={CaseConverter} />
-      <Route path="/tool/duplicate-remover" component={DuplicateRemover} />
       <Route path="/tool/lorem-ipsum" component={LoremIpsum} />
       <Route path="/tool/grammar-checker" component={GrammarChecker} />
       <Route path="/tool/qr-code" component={QrCode} />
