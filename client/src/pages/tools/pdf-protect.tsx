@@ -148,51 +148,22 @@ export default function PdfProtect() {
           </TabsList>
 
           <TabsContent value="protect" className="space-y-6">
-            <FileUpload
-              onFileSelect={handleFileSelect}
-              acceptedFormats=".pdf"
-              maxSizeMB={20}
-              disabled={processing}
-            />
-
-            {file && !outputPdfUrl && (
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter password to protect PDF"
-                    data-testid="input-password"
-                  />
-                  <p className="text-xs text-red-600 dark:text-red-400 font-medium">
-                    ⚠️ LIMITATION: Client-side PDF encryption is not supported. This tool cannot create password-protected PDFs. For true encryption, use professional PDF tools like Adobe Acrobat or online services.
+            <div className="p-4 border-2 border-red-200 dark:border-red-800 rounded-lg bg-red-50 dark:bg-red-950">
+              <div className="flex items-start gap-3">
+                <Lock className="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+                <div className="space-y-1">
+                  <p className="font-semibold text-red-900 dark:text-red-100">Feature Not Available</p>
+                  <p className="text-sm text-red-800 dark:text-red-200">
+                    Client-side PDF encryption is not supported. True password protection requires professional tools like:
                   </p>
+                  <ul className="text-sm text-red-800 dark:text-red-200 list-disc list-inside mt-2 space-y-1">
+                    <li>Adobe Acrobat</li>
+                    <li>Professional online PDF tools</li>
+                    <li>Server-side processing services</li>
+                  </ul>
                 </div>
-
-                <Button
-                  onClick={handleProtect}
-                  disabled={processing || !password}
-                  className="w-full"
-                  size="lg"
-                  data-testid="button-protect"
-                >
-                  {processing ? (
-                    <>
-                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                      Protecting...
-                    </>
-                  ) : (
-                    <>
-                      <Lock className="mr-2 h-4 w-4" />
-                      Protect PDF
-                    </>
-                  )}
-                </Button>
               </div>
-            )}
+            </div>
           </TabsContent>
 
           <TabsContent value="unlock" className="space-y-6">
@@ -235,15 +206,18 @@ export default function PdfProtect() {
           </TabsContent>
         </Tabs>
 
-        {outputPdfUrl && (
+        {outputPdfUrl && mode === "unlock" && (
           <div className="space-y-4">
-            <div className="p-4 border rounded-lg bg-muted/50">
-              <p className="text-sm text-muted-foreground mb-3">
-                Your {mode === "protect" ? "protected" : "unlocked"} PDF is ready!
+            <div className="p-4 border rounded-lg bg-green-50 dark:bg-green-950">
+              <p className="text-sm text-green-900 dark:text-green-100 mb-3 font-medium">
+                PDF Unlocked Successfully!
+              </p>
+              <p className="text-xs text-green-800 dark:text-green-200 mb-3">
+                The password protection has been removed from this PDF.
               </p>
               <Button onClick={handleDownload} className="w-full" data-testid="button-download">
                 <Download className="mr-2 h-4 w-4" />
-                Download {mode === "protect" ? "Protected" : "Unlocked"} PDF
+                Download Unlocked PDF
               </Button>
             </div>
           </div>
