@@ -88,6 +88,33 @@ Sitemap: https://officetoolshub.com/sitemap.xml`;
     res.json({ status: "ok", timestamp: new Date().toISOString() });
   });
 
+  // Contact form endpoint
+  app.post("/api/contact", (req, res) => {
+    const { name, email, subject, message } = req.body;
+
+    // Validate required fields
+    if (!name || !email || !subject || !message) {
+      return res.status(400).json({ error: "All fields are required" });
+    }
+
+    // Log the message (in production, this would send via email service)
+    const contactMessage = {
+      timestamp: new Date().toISOString(),
+      name,
+      email,
+      subject,
+      message,
+    };
+
+    console.log("Contact message received:", contactMessage);
+    // TODO: Integrate with SendGrid, Resend, or another email service to send to mudassiranimator92@gmail.com
+
+    res.json({ 
+      success: true, 
+      message: "Message received. We'll get back to you soon at mudassiranimator92@gmail.com",
+    });
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

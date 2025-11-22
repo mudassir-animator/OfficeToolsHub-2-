@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Mail, MessageSquare, HelpCircle } from "lucide-react";
+import { Mail, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -15,14 +15,35 @@ export default function Contact() {
     subject: "",
     message: "",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Message Sent!",
-      description: "Thank you for contacting us. We'll get back to you soon.",
-    });
-    setFormData({ name: "", email: "", subject: "", message: "" });
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) throw new Error("Failed to send message");
+
+      toast({
+        title: "Message Sent!",
+        description: "Thank you for contacting us. We'll get back to you soon.",
+      });
+      setFormData({ name: "", email: "", subject: "", message: "" });
+    } catch {
+      toast({
+        title: "Error",
+        description: "Failed to send message. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -38,39 +59,17 @@ export default function Contact() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8 mb-12">
-          {/* Contact Cards */}
-          <Card className="p-6 text-center" data-testid="card-email">
+        <div className="mb-12">
+          {/* Contact Info */}
+          <Card className="p-6 text-center max-w-sm mx-auto" data-testid="card-email">
             <div className="w-12 h-12 bg-primary/10 rounded-full mx-auto flex items-center justify-center mb-4">
               <Mail className="w-6 h-6 text-primary" />
             </div>
             <h3 className="font-semibold mb-2">Email Us</h3>
             <p className="text-sm text-muted-foreground mb-2">For general inquiries</p>
-            <a href="mailto:support@officetoolshub.com" className="text-sm text-primary hover:underline">
-              support@officetoolshub.com
+            <a href="mailto:mudassiranimator92@gmail.com" className="text-sm text-primary hover:underline">
+              mudassiranimator92@gmail.com
             </a>
-          </Card>
-
-          <Card className="p-6 text-center" data-testid="card-support">
-            <div className="w-12 h-12 bg-primary/10 rounded-full mx-auto flex items-center justify-center mb-4">
-              <MessageSquare className="w-6 h-6 text-primary" />
-            </div>
-            <h3 className="font-semibold mb-2">Live Chat</h3>
-            <p className="text-sm text-muted-foreground mb-2">Available 9AM - 5PM EST</p>
-            <Button variant="link" size="sm" className="text-sm text-primary p-0 h-auto">
-              Start Chat
-            </Button>
-          </Card>
-
-          <Card className="p-6 text-center" data-testid="card-help">
-            <div className="w-12 h-12 bg-primary/10 rounded-full mx-auto flex items-center justify-center mb-4">
-              <HelpCircle className="w-6 h-6 text-primary" />
-            </div>
-            <h3 className="font-semibold mb-2">Help Center</h3>
-            <p className="text-sm text-muted-foreground mb-2">Find answers instantly</p>
-            <Button variant="link" size="sm" className="text-sm text-primary p-0 h-auto">
-              Visit Help Center
-            </Button>
           </Card>
         </div>
 
@@ -128,8 +127,15 @@ export default function Contact() {
               />
             </div>
 
-            <Button type="submit" className="w-full" size="lg" data-testid="button-submit">
-              Send Message
+            <Button type="submit" className="w-full" size="lg" disabled={isSubmitting} data-testid="button-submit">
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                "Send Message"
+              )}
             </Button>
           </form>
         </Card>
