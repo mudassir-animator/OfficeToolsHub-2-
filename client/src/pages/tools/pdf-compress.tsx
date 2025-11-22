@@ -4,9 +4,13 @@ import { FileUpload } from "@/components/ui/file-upload";
 import { Button } from "@/components/ui/button";
 import { Download, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { PDFDocument } from 'pdf-lib';
+import * as pdfjsLib from 'pdfjs-dist';
+import jsPDF from 'jspdf';
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
+
+// Set up PDF.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 export default function PdfCompress() {
   const [file, setFile] = useState<File | null>(null);
@@ -14,7 +18,7 @@ export default function PdfCompress() {
   const [compressedPdfUrl, setCompressedPdfUrl] = useState<string>("");
   const [originalSize, setOriginalSize] = useState<number>(0);
   const [compressedSize, setCompressedSize] = useState<number>(0);
-  const [quality, setQuality] = useState<number>(75);
+  const [quality, setQuality] = useState<number>(70);
   const { toast } = useToast();
 
   const handleFileSelect = (selectedFile: File) => {
@@ -38,39 +42,58 @@ export default function PdfCompress() {
     setProcessing(true);
     try {
       const arrayBuffer = await file.arrayBuffer();
-      const pdfDoc = await PDFDocument.load(arrayBuffer);
+      const pdfDoc = pdfjsLib.getDocument(arrayBuffer);
+      const pdf = await pdfDoc.promise;
+      const pageCount = pdf.numPages;
 
-      // Remove metadata to reduce size
-      pdfDoc.setTitle('');
-      pdfDoc.setAuthor('');
-      pdfDoc.setSubject('');
-      pdfDoc.setKeywords([]);
-      pdfDoc.setProducer('');
-      pdfDoc.setCreator('');
-
-      // Save with aggressive compression options
-      // useObjectStreams enables stream compression which is the main compression method
-      const pdfBytes = await pdfDoc.save({
-        useObjectStreams: true,
-        addDefaultPage: false,
-      });
+      // Create new PDF with compressed images
+      const jsPdfDoc = new jsPDF();
+      const scaleFactor = quality / 100;
       
+      for (let pageNum = 1; pageNum <= pageCount; pageNum++) {
+        const page = await pdf.getPage(pageNum);
+        const viewport = page.getViewport({ scale: scaleFactor });
+        
+        // Render page to canvas with reduced resolution
+        const canvas = document.createElement('canvas');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        
+        const ctx = canvas.getContext('2d')!;
+        await page.render({ canvasContext: ctx, viewport }).promise;
+        
+        // Convert canvas to compressed image
+        const imgData = canvas.toDataURL('image/jpeg', quality / 100);
+        
+        // Add to new PDF
+        const imgWidth = 210; // A4 width in mm
+        const imgHeight = (viewport.height / viewport.width) * imgWidth;
+        
+        if (pageNum > 1) {
+          jsPdfDoc.addPage();
+        }
+        jsPdfDoc.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
+      }
+
+      // Get compressed PDF bytes
+      const pdfBytes = jsPdfDoc.output('arraybuffer');
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
       
       setCompressedPdfUrl(url);
-      setCompressedSize(pdfBytes.length);
+      setCompressedSize(pdfBytes.byteLength);
 
-      const reduction = ((originalSize - pdfBytes.length) / originalSize * 100).toFixed(1);
+      const reduction = ((originalSize - pdfBytes.byteLength) / originalSize * 100).toFixed(1);
       
       toast({
         title: "Compression Complete!",
         description: `File size reduced by ${reduction}%.`,
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Compression error:', error);
       toast({
         title: "Compression Failed",
-        description: "There was an error compressing the PDF. Please try again.",
+        description: error.message || "There was an error compressing the PDF. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -117,18 +140,18 @@ export default function PdfCompress() {
             </div>
 
             <div className="space-y-3">
-              <Label>Compression Quality: {quality}%</Label>
+              <Label>Output Quality: {quality}%</Label>
               <Slider
                 value={[quality]}
                 onValueChange={(value) => setQuality(value[0])}
-                min={50}
+                min={30}
                 max={100}
                 step={5}
                 className="w-full"
                 data-testid="slider-quality"
               />
               <p className="text-xs text-muted-foreground">
-                Higher quality = larger file size. Lower quality = smaller file size.
+                Lower quality produces smaller files. 30-50% for maximum compression, 80-100% for better clarity.
               </p>
             </div>
 
