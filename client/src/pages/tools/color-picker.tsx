@@ -13,7 +13,6 @@ interface Color {
 }
 
 export default function ColorPicker() {
-  const [file, setFile] = useState<File | null>(null);
   const [processing, setProcessing] = useState(false);
   const [colors, setColors] = useState<Color[]>([]);
   const [imageUrl, setImageUrl] = useState<string>("");
@@ -21,12 +20,10 @@ export default function ColorPicker() {
   const { toast } = useToast();
 
   const handleFileSelect = (selectedFile: File) => {
-    setFile(selectedFile);
-    setColors([]);
-    
     const reader = new FileReader();
     reader.onload = (e) => {
       setImageUrl(e.target?.result as string);
+      setColors([]);
     };
     reader.readAsDataURL(selectedFile);
   };
@@ -35,7 +32,7 @@ export default function ColorPicker() {
     return '#' + [r, g, b].map(x => {
       const hex = x.toString(16);
       return hex.length === 1 ? '0' + hex : hex;
-    }).join('');
+    }).join('').toUpperCase();
   };
 
   const rgbToHsl = (r: number, g: number, b: number): string => {
@@ -59,87 +56,94 @@ export default function ColorPicker() {
     return `hsl(${Math.round(h * 360)}, ${Math.round(s * 100)}%, ${Math.round(l * 100)}%)`;
   };
 
-  const handleExtractColors = async () => {
-    if (!file || !imageUrl) return;
+  const handleExtractColors = () => {
+    if (!imageUrl) return;
 
     setProcessing(true);
-    try {
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      
-      img.onload = () => {
-        try {
-          const canvas = document.createElement('canvas');
-          const scale = Math.min(1, 200 / Math.max(img.width, img.height));
-          canvas.width = img.width * scale;
-          canvas.height = img.height * scale;
+    
+    const img = new Image();
+    img.src = imageUrl;
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
 
-          const ctx = canvas.getContext('2d')!;
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          throw new Error('Could not get canvas context');
+        }
 
-          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          const colorMap = new Map<string, number>();
+        ctx.drawImage(img, 0, 0);
 
-          for (let i = 0; i < imageData.data.length; i += 4) {
-            const r = imageData.data[i];
-            const g = imageData.data[i + 1];
-            const b = imageData.data[i + 2];
-            const hex = rgbToHex(r, g, b);
-            colorMap.set(hex, (colorMap.get(hex) || 0) + 1);
-          }
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const colorMap = new Map<string, number>();
 
-          const sortedColors = Array.from(colorMap.entries())
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 10)
-            .map(([hex, count]) => {
-              const r = parseInt(hex.slice(1, 3), 16);
-              const g = parseInt(hex.slice(3, 5), 16);
-              const b = parseInt(hex.slice(5, 7), 16);
-              return {
-                hex,
-                rgb: `rgb(${r}, ${g}, ${b})`,
-                hsl: rgbToHsl(r, g, b),
-                count,
-              };
-            });
+        // Sample every pixel
+        for (let i = 0; i < imageData.data.length; i += 4) {
+          const r = imageData.data[i];
+          const g = imageData.data[i + 1];
+          const b = imageData.data[i + 2];
+          const a = imageData.data[i + 3];
 
-          setColors(sortedColors);
+          // Skip transparent pixels
+          if (a < 128) continue;
+
+          const hex = rgbToHex(r, g, b);
+          colorMap.set(hex, (colorMap.get(hex) || 0) + 1);
+        }
+
+        if (colorMap.size === 0) {
           toast({
-            title: "Colors Extracted!",
-            description: `Found ${sortedColors.length} dominant colors.`,
-          });
-          setProcessing(false);
-        } catch (innerError) {
-          console.error('Color extraction error:', innerError);
-          toast({
-            title: "Extraction Failed",
-            description: "There was an error processing the image. Please try again.",
+            title: "No colors found",
+            description: "The image appears to be empty or transparent.",
             variant: "destructive",
           });
           setProcessing(false);
+          return;
         }
-      };
 
-      img.onerror = () => {
-        console.error('Image load error');
+        const sortedColors = Array.from(colorMap.entries())
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 10)
+          .map(([hex, count]) => {
+            const r = parseInt(hex.slice(1, 3), 16);
+            const g = parseInt(hex.slice(3, 5), 16);
+            const b = parseInt(hex.slice(5, 7), 16);
+            return {
+              hex,
+              rgb: `rgb(${r}, ${g}, ${b})`,
+              hsl: rgbToHsl(r, g, b),
+              count,
+            };
+          });
+
+        setColors(sortedColors);
         toast({
-          title: "Image Load Failed",
-          description: "Could not load the image. Please try again.",
+          title: "Colors Extracted!",
+          description: `Found ${sortedColors.length} dominant colors.`,
+        });
+      } catch (error) {
+        console.error('Color extraction error:', error);
+        toast({
+          title: "Extraction Failed",
+          description: "There was an error extracting colors from the image.",
           variant: "destructive",
         });
+      } finally {
         setProcessing(false);
-      };
+      }
+    };
 
-      img.src = imageUrl;
-    } catch (error) {
-      console.error('Extraction error:', error);
+    img.onerror = () => {
+      console.error('Image load error');
       toast({
-        title: "Extraction Failed",
-        description: "There was an error extracting colors. Please try again.",
+        title: "Image Load Failed",
+        description: "Could not load the image. Please try a different file.",
         variant: "destructive",
       });
       setProcessing(false);
-    }
+    };
   };
 
   const handleCopy = (value: string) => {
@@ -160,8 +164,8 @@ export default function ColorPicker() {
       howToUse={[
         "Upload your image file",
         "Click 'Extract Colors' to analyze",
-        "View the dominant colors",
-        "Click any color to copy its code",
+        "View the dominant colors found in your image",
+        "Click any color value to copy to clipboard",
       ]}
       relatedTools={[
         { name: "Image Format Converter", path: "/tool/image-converter" },
@@ -172,7 +176,7 @@ export default function ColorPicker() {
       <div className="space-y-6">
         <FileUpload
           onFileSelect={handleFileSelect}
-          acceptedFormats=".jpg,.jpeg,.png,.webp"
+          acceptedFormats=".jpg,.jpeg,.png,.webp,.gif"
           maxSizeMB={20}
           disabled={processing}
         />
@@ -265,6 +269,18 @@ export default function ColorPicker() {
                 </div>
               ))}
             </div>
+
+            <Button
+              onClick={() => {
+                setColors([]);
+                setImageUrl("");
+              }}
+              variant="outline"
+              className="w-full"
+              data-testid="button-reset"
+            >
+              Extract From Another Image
+            </Button>
           </div>
         )}
       </div>
