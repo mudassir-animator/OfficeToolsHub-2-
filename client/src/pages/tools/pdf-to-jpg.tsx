@@ -1,27 +1,20 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ToolWrapper } from "@/components/tool-wrapper";
 import { FileUpload } from "@/components/ui/file-upload";
 import { Button } from "@/components/ui/button";
 import { Download, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import * as pdfjsLib from 'pdfjs-dist';
+import pdfWorker from 'pdfjs-dist/build/pdf.worker?worker';
+
+// Configure PDF.js worker
+pdfjsLib.GlobalWorkerOptions.workerPort = new pdfWorker();
 
 export default function PdfToJpg() {
   const [file, setFile] = useState<File | null>(null);
   const [processing, setProcessing] = useState(false);
   const [images, setImages] = useState<string[]>([]);
   const { toast } = useToast();
-
-  // Initialize PDF.js worker on mount
-  useEffect(() => {
-    // Use the built-in worker from pdfjs-dist
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `/pdf.worker.min.js`;
-    
-    // Fallback: if that doesn't work, try to use the CDN
-    if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
-    }
-  }, []);
 
   const handleFileSelect = (selectedFile: File) => {
     setFile(selectedFile);
@@ -34,56 +27,67 @@ export default function PdfToJpg() {
     setProcessing(true);
     try {
       const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const pdf = await pdfjsLib.getDocument({
+        data: arrayBuffer,
+        disableAutoFetch: false,
+        disableStream: false,
+      }).promise;
+
       const imageUrls: string[] = [];
 
       for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
         try {
           const page = await pdf.getPage(pageNum);
-          const scale = 2;
-          const viewport = page.getViewport({ scale });
           
-          const canvas = document.createElement('canvas') as HTMLCanvasElement;
+          // Get viewport at scale 2 for high quality
+          const viewport = page.getViewport({ scale: 2.0 });
+
+          // Create canvas with proper dimensions
+          const canvas = document.createElement('canvas');
           canvas.width = viewport.width;
           canvas.height = viewport.height;
+
+          const context = canvas.getContext('2d');
+          if (!context) throw new Error('Could not get 2D context');
+
+          // Render page to canvas
+          const renderTask = page.render({
+            canvasContext: context,
+            viewport: viewport,
+          });
+
+          await renderTask.promise;
+
+          // Convert to JPEG with white background
+          const tempCanvas = document.createElement('canvas');
+          tempCanvas.width = viewport.width;
+          tempCanvas.height = viewport.height;
           
-          const context = canvas.getContext('2d') as CanvasRenderingContext2D;
-          if (!context) {
-            throw new Error('Failed to get canvas context');
+          const tempCtx = tempCanvas.getContext('2d');
+          if (tempCtx) {
+            // White background for JPEG
+            tempCtx.fillStyle = 'white';
+            tempCtx.fillRect(0, 0, viewport.width, viewport.height);
+            tempCtx.drawImage(canvas, 0, 0);
           }
 
-          // Render page to canvas with proper parameters
-          await page.render({
-            canvasContext: context,
-            viewport
-          }).promise;
-          
-          // Create JPEG with white background
-          const jpegCanvas = document.createElement('canvas') as HTMLCanvasElement;
-          jpegCanvas.width = canvas.width;
-          jpegCanvas.height = canvas.height;
-          
-          const jpegCtx = jpegCanvas.getContext('2d') as CanvasRenderingContext2D;
-          jpegCtx.fillStyle = '#FFFFFF';
-          jpegCtx.fillRect(0, 0, jpegCanvas.width, jpegCanvas.height);
-          jpegCtx.drawImage(canvas, 0, 0);
-          
-          const jpegData = jpegCanvas.toDataURL('image/jpeg', 0.95);
-          imageUrls.push(jpegData);
+          const jpegUrl = tempCanvas.toDataURL('image/jpeg', 0.95);
+          imageUrls.push(jpegUrl);
         } catch (pageError) {
-          console.error(`Error rendering page ${pageNum}:`, pageError);
+          console.error(`Error processing page ${pageNum}:`, pageError);
+          throw pageError;
         }
       }
 
-      if (imageUrls.length === 0) {
-        throw new Error('No pages were successfully converted');
+      if (imageUrls.length > 0) {
+        setImages(imageUrls);
+        toast({
+          title: "Conversion Complete!",
+          description: `Successfully converted ${imageUrls.length} page(s) to JPG.`,
+        });
+      } else {
+        throw new Error('No pages were converted');
       }
-
-      setImages(imageUrls);
-      toast({
-        title: "Conversion Complete!",
-        description: `Successfully converted ${imageUrls.length} page(s) to JPG.`,
-      });
     } catch (error) {
       console.error('PDF conversion error:', error);
       toast({
