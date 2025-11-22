@@ -60,7 +60,7 @@ export default function PdfCompress() {
         canvas.height = viewport.height;
         
         const ctx = canvas.getContext('2d')!;
-        await page.render({ canvasContext: ctx, viewport }).promise;
+        await page.render({ canvasContext: ctx, viewport, canvas }).promise;
         
         // Convert canvas to compressed image
         const imgData = canvas.toDataURL('image/jpeg', quality / 100);

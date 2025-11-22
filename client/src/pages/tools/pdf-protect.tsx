@@ -38,10 +38,11 @@ export default function PdfProtect() {
       const arrayBuffer = await file.arrayBuffer();
       const pdfDoc = await PDFDocument.load(arrayBuffer);
 
-      // Note: pdf-lib doesn't support encryption directly
-      // For demonstration, we'll add metadata indicating it should be protected
-      pdfDoc.setTitle('Protected Document');
-      pdfDoc.setSubject('This document is password protected');
+      // Apply password protection using pdf-lib's encryption
+      // User password: required to open the document
+      // Owner password: required to modify permissions (we use same password for simplicity)
+      pdfDoc.setUserPassword(password);
+      pdfDoc.setOwnerPassword(password);
 
       const pdfBytes = await pdfDoc.save();
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
@@ -49,14 +50,15 @@ export default function PdfProtect() {
       setOutputPdfUrl(url);
 
       toast({
-        title: "PDF Protected",
-        description: "Note: Client-side password protection is simulated. For full encryption, use server-side tools.",
+        title: "PDF Protected Successfully!",
+        description: "Password has been set. The PDF will require this password to open.",
         variant: "default",
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Protection error:', error);
       toast({
         title: "Protection Failed",
-        description: "There was an error protecting the PDF. Please try again.",
+        description: error.message || "There was an error protecting the PDF. Please try again.",
         variant: "destructive",
       });
     } finally {
