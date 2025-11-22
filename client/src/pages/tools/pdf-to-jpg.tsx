@@ -40,37 +40,36 @@ export default function PdfToJpg() {
       for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
         try {
           const page = await pdf.getPage(pageNum);
-          const viewport = page.getViewport({ scale: 2 });
+          const scale = 2;
+          const viewport = page.getViewport({ scale });
           
-          const canvas = document.createElement('canvas');
+          const canvas = document.createElement('canvas') as HTMLCanvasElement;
           canvas.width = viewport.width;
           canvas.height = viewport.height;
           
-          const context = canvas.getContext('2d');
+          const context = canvas.getContext('2d') as CanvasRenderingContext2D;
           if (!context) {
             throw new Error('Failed to get canvas context');
           }
 
-          // Render page to canvas
-          const renderTask = page.render({
+          // Render page to canvas with proper parameters
+          await page.render({
             canvasContext: context,
-            viewport: viewport
-          });
+            viewport
+          }).promise;
           
-          await renderTask.promise;
+          // Create JPEG with white background
+          const jpegCanvas = document.createElement('canvas') as HTMLCanvasElement;
+          jpegCanvas.width = canvas.width;
+          jpegCanvas.height = canvas.height;
           
-          // Convert canvas to JPEG with white background for transparency
-          const tempCanvas = document.createElement('canvas');
-          tempCanvas.width = canvas.width;
-          tempCanvas.height = canvas.height;
-          const tempCtx = tempCanvas.getContext('2d');
-          if (tempCtx) {
-            tempCtx.fillStyle = '#FFFFFF';
-            tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-            tempCtx.drawImage(canvas, 0, 0);
-          }
+          const jpegCtx = jpegCanvas.getContext('2d') as CanvasRenderingContext2D;
+          jpegCtx.fillStyle = '#FFFFFF';
+          jpegCtx.fillRect(0, 0, jpegCanvas.width, jpegCanvas.height);
+          jpegCtx.drawImage(canvas, 0, 0);
           
-          imageUrls.push(tempCanvas.toDataURL('image/jpeg', 0.95));
+          const jpegData = jpegCanvas.toDataURL('image/jpeg', 0.95);
+          imageUrls.push(jpegData);
         } catch (pageError) {
           console.error(`Error rendering page ${pageNum}:`, pageError);
         }
