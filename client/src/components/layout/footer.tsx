@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { Mail, Github, Twitter, Linkedin } from "lucide-react";
+import { Mail, Linkedin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -41,15 +41,15 @@ export function Footer() {
               All-in-one free online toolbox for PDF, image, text processing, and more. No login required.
             </p>
             <div className="flex gap-2">
-              <Button variant="ghost" size="icon" data-testid="link-social-twitter">
-                <Twitter className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="icon" data-testid="link-social-github">
-                <Github className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="icon" data-testid="link-social-linkedin">
-                <Linkedin className="h-4 w-4" />
-              </Button>
+              <a 
+                href="https://www.linkedin.com/in/mudassir-ahmed-929195276/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+              >
+                <Button variant="ghost" size="icon" data-testid="link-social-linkedin">
+                  <Linkedin className="h-4 w-4" />
+                </Button>
+              </a>
             </div>
           </div>
 
@@ -109,7 +109,7 @@ export function Footer() {
         <div className="mt-12 pt-8 border-t">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm text-muted-foreground">
-              © {currentYear} Office Tools Hub. All rights reserved.
+              © {currentYear} Office Tools Hub. Created by <span className="font-semibold text-foreground">Mudassir Ahmed</span>. All rights reserved.
             </p>
             <div className="flex gap-6">
               {footerLinks.legal.map((link) => (

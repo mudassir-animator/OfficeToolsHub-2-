@@ -2,13 +2,11 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { CategoryCard } from "@/components/ui/category-card";
 import { ToolCard } from "@/components/ui/tool-card";
-import { TemplateCard } from "@/components/ui/template-card";
-import { toolCategories, getPopularTools, templates } from "@/lib/tools-data";
+import { toolCategories, getPopularTools } from "@/lib/tools-data";
 import { CheckCircle2, Zap, Shield, ArrowRight } from "lucide-react";
 
 export default function Home() {
   const popularTools = getPopularTools();
-  const previewTemplates = templates.slice(0, 4);
 
   return (
     <div className="min-h-screen">
@@ -118,41 +116,6 @@ export default function Home() {
                 icon={tool.icon}
                 path={tool.path}
                 isPro={tool.isPro}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Template Preview */}
-      <section className="py-20 bg-background">
-        <div className="max-w-7xl mx-auto px-4 md:px-8">
-          <div className="flex justify-between items-end mb-12">
-            <div>
-              <h2 className="text-3xl md:text-4xl font-semibold mb-4" data-testid="text-templates-title">
-                Professional Templates
-              </h2>
-              <p className="text-lg text-muted-foreground">
-                Download ready-to-use templates for your business needs
-              </p>
-            </div>
-            <Link href="/templates">
-              <Button variant="outline" data-testid="button-view-all-templates">
-                View All Templates
-                <ArrowRight className="ml-2 w-4 h-4" />
-              </Button>
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {previewTemplates.map((template) => (
-              <TemplateCard
-                key={template.id}
-                name={template.name}
-                category={template.category}
-                description={template.description}
-                thumbnailUrl={template.thumbnailUrl}
-                downloadUrl={template.downloadUrl}
               />
             ))}
           </div>
