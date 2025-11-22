@@ -28,7 +28,6 @@ import ImageCompress from "@/pages/tools/image-compress";
 import ImageResize from "@/pages/tools/image-resize";
 import ImageCrop from "@/pages/tools/image-crop";
 import ImageConverter from "@/pages/tools/image-converter";
-import ImageEnhancer from "@/pages/tools/image-enhancer";
 import WordCounter from "@/pages/tools/word-counter";
 import CaseConverter from "@/pages/tools/case-converter";
 import DuplicateRemover from "@/pages/tools/duplicate-remover";
@@ -69,7 +68,6 @@ function Router() {
       <Route path="/tool/image-resize" component={ImageResize} />
       <Route path="/tool/image-crop" component={ImageCrop} />
       <Route path="/tool/image-converter" component={ImageConverter} />
-      <Route path="/tool/image-enhancer" component={ImageEnhancer} />
       <Route path="/tool/word-counter" component={WordCounter} />
       <Route path="/tool/case-converter" component={CaseConverter} />
       <Route path="/tool/duplicate-remover" component={DuplicateRemover} />

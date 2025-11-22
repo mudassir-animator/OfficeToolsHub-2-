@@ -45,9 +45,9 @@ export const toolCategories: ToolCategory[] = [
   {
     id: "image",
     name: "Image Tools",
-    description: "Compress, resize, crop, and enhance images",
+    description: "Compress, resize, crop, and convert images",
     icon: "Image",
-    toolCount: 5,
+    toolCount: 4,
     path: "/tools/image",
   },
   {
@@ -176,15 +176,6 @@ export const allTools: Tool[] = [
     category: "image",
     path: "/tool/image-converter",
     icon: "ArrowRightLeft",
-    isPro: false,
-  },
-  {
-    id: "image-enhance",
-    name: "Image Enhancer",
-    description: "Adjust brightness, contrast, and saturation",
-    category: "image",
-    path: "/tool/image-enhance",
-    icon: "Wand2",
     isPro: false,
   },
 
