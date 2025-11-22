@@ -60,55 +60,79 @@ export default function ColorPicker() {
   };
 
   const handleExtractColors = async () => {
-    if (!file) return;
+    if (!file || !imageUrl) return;
 
     setProcessing(true);
     try {
       const img = new Image();
+      img.crossOrigin = "anonymous";
+      
       img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const scale = Math.min(1, 200 / Math.max(img.width, img.height));
-        canvas.width = img.width * scale;
-        canvas.height = img.height * scale;
+        try {
+          const canvas = document.createElement('canvas');
+          const scale = Math.min(1, 200 / Math.max(img.width, img.height));
+          canvas.width = img.width * scale;
+          canvas.height = img.height * scale;
 
-        const ctx = canvas.getContext('2d')!;
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          const ctx = canvas.getContext('2d')!;
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const colorMap = new Map<string, number>();
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const colorMap = new Map<string, number>();
 
-        for (let i = 0; i < imageData.data.length; i += 4) {
-          const r = imageData.data[i];
-          const g = imageData.data[i + 1];
-          const b = imageData.data[i + 2];
-          const hex = rgbToHex(r, g, b);
-          colorMap.set(hex, (colorMap.get(hex) || 0) + 1);
-        }
+          for (let i = 0; i < imageData.data.length; i += 4) {
+            const r = imageData.data[i];
+            const g = imageData.data[i + 1];
+            const b = imageData.data[i + 2];
+            const hex = rgbToHex(r, g, b);
+            colorMap.set(hex, (colorMap.get(hex) || 0) + 1);
+          }
 
-        const sortedColors = Array.from(colorMap.entries())
-          .sort((a, b) => b[1] - a[1])
-          .slice(0, 10)
-          .map(([hex, count]) => {
-            const r = parseInt(hex.slice(1, 3), 16);
-            const g = parseInt(hex.slice(3, 5), 16);
-            const b = parseInt(hex.slice(5, 7), 16);
-            return {
-              hex,
-              rgb: `rgb(${r}, ${g}, ${b})`,
-              hsl: rgbToHsl(r, g, b),
-              count,
-            };
+          const sortedColors = Array.from(colorMap.entries())
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 10)
+            .map(([hex, count]) => {
+              const r = parseInt(hex.slice(1, 3), 16);
+              const g = parseInt(hex.slice(3, 5), 16);
+              const b = parseInt(hex.slice(5, 7), 16);
+              return {
+                hex,
+                rgb: `rgb(${r}, ${g}, ${b})`,
+                hsl: rgbToHsl(r, g, b),
+                count,
+              };
+            });
+
+          setColors(sortedColors);
+          toast({
+            title: "Colors Extracted!",
+            description: `Found ${sortedColors.length} dominant colors.`,
           });
+          setProcessing(false);
+        } catch (innerError) {
+          console.error('Color extraction error:', innerError);
+          toast({
+            title: "Extraction Failed",
+            description: "There was an error processing the image. Please try again.",
+            variant: "destructive",
+          });
+          setProcessing(false);
+        }
+      };
 
-        setColors(sortedColors);
+      img.onerror = () => {
+        console.error('Image load error');
         toast({
-          title: "Colors Extracted!",
-          description: `Found ${sortedColors.length} dominant colors.`,
+          title: "Image Load Failed",
+          description: "Could not load the image. Please try again.",
+          variant: "destructive",
         });
         setProcessing(false);
       };
+
       img.src = imageUrl;
     } catch (error) {
+      console.error('Extraction error:', error);
       toast({
         title: "Extraction Failed",
         description: "There was an error extracting colors. Please try again.",
