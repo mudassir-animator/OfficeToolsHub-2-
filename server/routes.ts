@@ -3,9 +3,19 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import path from "path";
 import { fileURLToPath } from "url";
+import nodemailer from "nodemailer";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Initialize nodemailer transporter for Gmail
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_APP_PASSWORD,
+  },
+});
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Template download routes
@@ -89,7 +99,7 @@ Sitemap: https://officetoolshub.com/sitemap.xml`;
   });
 
   // Contact form endpoint
-  app.post("/api/contact", (req, res) => {
+  app.post("/api/contact", async (req, res) => {
     const { name, email, subject, message } = req.body;
 
     // Validate required fields
@@ -97,22 +107,41 @@ Sitemap: https://officetoolshub.com/sitemap.xml`;
       return res.status(400).json({ error: "All fields are required" });
     }
 
-    // Log the message (in production, this would send via email service)
-    const contactMessage = {
-      timestamp: new Date().toISOString(),
-      name,
-      email,
-      subject,
-      message,
-    };
+    try {
+      // Send email to Gmail account
+      await transporter.sendMail({
+        from: process.env.GMAIL_USER,
+        to: process.env.GMAIL_USER,
+        replyTo: email,
+        subject: `Office Tools Hub - ${subject}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px;">
+            <h2>New Contact Form Submission</h2>
+            <p><strong>From:</strong> ${name} (${email})</p>
+            <p><strong>Subject:</strong> ${subject}</p>
+            <hr />
+            <h3>Message:</h3>
+            <p>${message.replace(/\n/g, '<br>')}</p>
+            <hr />
+            <p style="color: #666; font-size: 12px;">
+              This message was sent from Office Tools Hub contact form.
+            </p>
+          </div>
+        `,
+      });
 
-    console.log("Contact message received:", contactMessage);
-    // TODO: Integrate with SendGrid, Resend, or another email service to send to mudassiranimator92@gmail.com
+      console.log(`Contact message from ${name} (${email}) sent successfully`);
 
-    res.json({ 
-      success: true, 
-      message: "Message received. We'll get back to you soon at mudassiranimator92@gmail.com",
-    });
+      res.json({ 
+        success: true, 
+        message: "Message sent successfully! We'll get back to you soon.",
+      });
+    } catch (error) {
+      console.error("Failed to send contact email:", error);
+      res.status(500).json({ 
+        error: "Failed to send message. Please try again later.",
+      });
+    }
   });
 
   const httpServer = createServer(app);
