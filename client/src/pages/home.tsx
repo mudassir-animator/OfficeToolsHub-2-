@@ -41,21 +41,6 @@ export default function Home() {
                   </Button>
                 </Link>
               </div>
-
-              <div className="flex items-center gap-8 pt-4">
-                <div>
-                  <p className="text-2xl font-semibold" data-testid="text-stat-users">1M+</p>
-                  <p className="text-sm text-muted-foreground">Users</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-semibold" data-testid="text-stat-files">5M+</p>
-                  <p className="text-sm text-muted-foreground">Files Processed</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-semibold" data-testid="text-stat-tools">28</p>
-                  <p className="text-sm text-muted-foreground">Tools</p>
-                </div>
-              </div>
             </div>
 
             {/* Right Column */}
