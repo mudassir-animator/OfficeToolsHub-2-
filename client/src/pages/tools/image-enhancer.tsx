@@ -8,24 +8,23 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 
 export default function ImageEnhancer() {
-  const [file, setFile] = useState<File | null>(null);
-  const [processing, setProcessing] = useState(false);
-  const [enhancedImageUrl, setEnhancedImageUrl] = useState<string>("");
   const [imageUrl, setImageUrl] = useState<string>("");
-  const [brightness, setBrightness] = useState<number>(100);
-  const [contrast, setContrast] = useState<number>(100);
-  const [saturation, setSaturation] = useState<number>(100);
+  const [processing, setProcessing] = useState(false);
+  const [brightness, setBrightness] = useState(100);
+  const [contrast, setContrast] = useState(100);
+  const [saturation, setSaturation] = useState(100);
+  const [downloadUrl, setDownloadUrl] = useState<string>("");
+  const [fileName, setFileName] = useState<string>("");
   const { toast } = useToast();
 
-  const handleFileSelect = (selectedFile: File) => {
-    setFile(selectedFile);
-    setEnhancedImageUrl("");
-    
+  const handleFileSelect = (file: File) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       setImageUrl(e.target?.result as string);
+      setFileName(file.name);
+      setDownloadUrl("");
     };
-    reader.readAsDataURL(selectedFile);
+    reader.readAsDataURL(file);
   };
 
   const resetFilters = () => {
@@ -34,50 +33,66 @@ export default function ImageEnhancer() {
     setSaturation(100);
   };
 
-  const handleEnhance = async () => {
-    if (!file || !imageUrl) return;
+  const handleApply = () => {
+    if (!imageUrl) return;
 
     setProcessing(true);
-    try {
-      const img = new Image();
-      img.onload = () => {
+    
+    const img = new Image();
+    img.onload = () => {
+      try {
         const canvas = document.createElement('canvas');
         canvas.width = img.width;
         canvas.height = img.height;
 
-        const ctx = canvas.getContext('2d')!;
-        
-        // Apply filters using CSS filter
+        const ctx = canvas.getContext('2d');
+        if (!ctx) throw new Error('Could not get canvas context');
+
+        // Apply filters
         ctx.filter = `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`;
         ctx.drawImage(img, 0, 0);
 
         canvas.toBlob((blob) => {
           if (blob) {
             const url = URL.createObjectURL(blob);
-            setEnhancedImageUrl(url);
+            setDownloadUrl(url);
             toast({
               title: "Enhancement Complete!",
-              description: "Image has been enhanced successfully.",
+              description: "Image has been enhanced. Ready to download!",
             });
           }
           setProcessing(false);
-        }, file.type);
-      };
-      img.src = imageUrl;
-    } catch (error) {
+        }, 'image/png');
+      } catch (error) {
+        console.error('Enhancement error:', error);
+        toast({
+          title: "Enhancement Failed",
+          description: "There was an error enhancing the image.",
+          variant: "destructive",
+        });
+        setProcessing(false);
+      }
+    };
+
+    img.onerror = () => {
+      console.error('Image load error');
       toast({
-        title: "Enhancement Failed",
-        description: "There was an error enhancing the image. Please try again.",
+        title: "Image Load Failed",
+        description: "Could not load the image.",
         variant: "destructive",
       });
       setProcessing(false);
-    }
+    };
+
+    img.src = imageUrl;
   };
 
   const handleDownload = () => {
+    if (!downloadUrl || !fileName) return;
+    
     const link = document.createElement('a');
-    link.href = enhancedImageUrl;
-    link.download = `enhanced-${file?.name || 'image.jpg'}`;
+    link.href = downloadUrl;
+    link.download = `enhanced-${fileName}`;
     link.click();
   };
 
@@ -94,18 +109,18 @@ export default function ImageEnhancer() {
         "Upload your image file",
         "Adjust brightness, contrast, and saturation sliders",
         "Preview changes in real-time",
-        "Download the enhanced image",
+        "Click 'Apply & Download' to save the enhanced image",
       ]}
       relatedTools={[
-        { name: "Color Picker", path: "/tool/color-picker" },
         { name: "Image Compressor", path: "/tool/image-compress" },
         { name: "Image Format Converter", path: "/tool/image-converter" },
+        { name: "Image Resizer", path: "/tool/image-resize" },
       ]}
     >
       <div className="space-y-6">
         <FileUpload
           onFileSelect={handleFileSelect}
-          acceptedFormats=".jpg,.jpeg,.png,.webp"
+          acceptedFormats=".jpg,.jpeg,.png,.webp,.gif"
           maxSizeMB={20}
           disabled={processing}
         />
@@ -117,7 +132,7 @@ export default function ImageEnhancer() {
                 src={imageUrl}
                 alt="Preview"
                 className="max-w-full h-auto mx-auto rounded"
-                style={{ ...filterStyle, maxHeight: '400px' }}
+                style={{ ...filterStyle, maxHeight: "400px" }}
               />
             </div>
 
@@ -174,10 +189,10 @@ export default function ImageEnhancer() {
                   Reset
                 </Button>
                 <Button
-                  onClick={handleEnhance}
+                  onClick={handleApply}
                   disabled={processing}
                   className="flex-1"
-                  data-testid="button-enhance"
+                  data-testid="button-apply"
                 >
                   {processing ? (
                     <>
@@ -193,10 +208,16 @@ export default function ImageEnhancer() {
           </div>
         )}
 
-        {enhancedImageUrl && (
-          <div className="p-4 border rounded-lg bg-muted/50">
-            <p className="text-sm text-muted-foreground mb-3">Your enhanced image is ready!</p>
-            <Button onClick={handleDownload} className="w-full" data-testid="button-download">
+        {downloadUrl && (
+          <div className="p-4 border rounded-lg bg-green-50 dark:bg-green-950">
+            <p className="text-sm font-medium text-green-900 dark:text-green-100 mb-3">
+              ✓ Enhancement complete! Your image is ready to download.
+            </p>
+            <Button
+              onClick={handleDownload}
+              className="w-full"
+              data-testid="button-download"
+            >
               <Download className="mr-2 h-4 w-4" />
               Download Enhanced Image
             </Button>
