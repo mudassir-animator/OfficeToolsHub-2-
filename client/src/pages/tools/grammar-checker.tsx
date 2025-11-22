@@ -41,6 +41,8 @@ export default function GrammarChecker() {
       'wich': 'which', 'reccomend': 'recommend', 'neccessary': 'necessary',
       'occassion': 'occasion', 'beleive': 'believe', 'achive': 'achieve',
       'apparantly': 'apparently', 'arguement': 'argument', 'calender': 'calendar',
+      'accomodate': 'accommodate', 'gratefull': 'grateful',
+      'harrass': 'harass', 'occassionally': 'occasionally',
     };
 
     // Check for double spaces
@@ -70,14 +72,26 @@ export default function GrammarChecker() {
       const trimmed = sentence.trim();
       if (!trimmed) return;
 
-      // Check for capitalization at sentence start
-      if (trimmed.length > 0 && /[a-z]/.test(trimmed[0])) {
+      // Check for capitalization at sentence start (only if not an abbreviation or single letter)
+      if (trimmed.length > 2 && /^[a-z]/.test(trimmed)) {
         foundIssues.push({
           type: "Capitalization",
           message: "Sentence should start with a capital letter",
           sentence: trimmed,
           sentenceIndex: idx,
         });
+      }
+
+      // Check for missing punctuation at end
+      if (!inputText.substring(inputText.lastIndexOf(trimmed) + trimmed.length).match(/^[.!?\s]/)) {
+        if (trimmed.length > 3 && /[a-z]$/.test(trimmed)) {
+          foundIssues.push({
+            type: "Punctuation",
+            message: "Sentence should end with proper punctuation",
+            sentence: trimmed,
+            sentenceIndex: idx,
+          });
+        }
       }
 
       // Common grammar mistake patterns
@@ -103,24 +117,54 @@ export default function GrammarChecker() {
           message: 'Use "have" instead of "of" (should have, could have, would have)',
         },
         { 
-          pattern: /\beffect\b.*?\bchange\b/i, 
-          correct: "affect", 
-          message: 'Use "affect" as a verb meaning "to influence"',
+          pattern: /\bto much\b/i, 
+          correct: "too much", 
+          message: 'Use "too much" (excess), not "to much"',
         },
         { 
-          pattern: /\bto much\b|\bto many\b/i, 
-          correct: "too much/many", 
-          message: 'Use "too" for excess, not "to"',
+          pattern: /\bto many\b/i, 
+          correct: "too many", 
+          message: 'Use "too many" (excess), not "to many"',
         },
         { 
-          pattern: /\byour\b\s+(going|coming|doing)/i, 
+          pattern: /\byour\s+(going|coming|running|walking|doing|saying|thinking)/i, 
           correct: "you're", 
-          message: 'Use "you\'re" (you are) before verbs',
+          message: 'Use "you\'re" (you are) before verbs, not "your"',
         },
         { 
-          pattern: /\bits\b\s+(going|very|really)/i, 
+          pattern: /\bits\s+(going|running|walking|a|very|really)/i, 
           correct: "it's", 
-          message: 'Use "it\'s" (it is) before adjectives/verbs',
+          message: 'Use "it\'s" (it is), not "its"',
+        },
+        { 
+          pattern: /\bthere\s+(going|running)/i, 
+          correct: "they're", 
+          message: 'Use "they\'re" (they are) before verbs, not "there"',
+        },
+        { 
+          pattern: /\bwho\'s\s+(house|book|car)/i, 
+          correct: "whose", 
+          message: 'Use "whose" for possession, not "who\'s"',
+        },
+        { 
+          pattern: /\band than\b/i, 
+          correct: "and then", 
+          message: 'Use "and then" (sequence), not "and than"',
+        },
+        { 
+          pattern: /\bto\s+(much|many)\s+information/i, 
+          correct: "too much information", 
+          message: 'Use "too much" (excess), not "to much"',
+        },
+        { 
+          pattern: /\bcan not\b/i, 
+          correct: "cannot", 
+          message: 'Typically written as "cannot" (one word)',
+        },
+        { 
+          pattern: /\bseprate\b/i, 
+          correct: "separate", 
+          message: 'Misspelled: use "separate"',
         },
       ];
 
@@ -138,16 +182,22 @@ export default function GrammarChecker() {
 
       // Token-level spelling check
       const words = trimmed.toLowerCase().split(/\s+/);
-      words.forEach(word => {
+      words.forEach((word, wordIdx) => {
         const cleanWord = word.replace(/[^a-z]/g, '');
-        if (cleanWord.length > 0 && commonMisspellings[cleanWord]) {
-          foundIssues.push({
-            type: "Spelling",
-            message: `Possible misspelling: "${cleanWord}" → "${commonMisspellings[cleanWord]}"`,
-            sentence: trimmed,
-            sentenceIndex: idx,
-            suggestion: commonMisspellings[cleanWord],
-          });
+        if (cleanWord.length > 2 && commonMisspellings[cleanWord]) {
+          // Avoid duplicate issues
+          const isDuplicate = foundIssues.some(
+            issue => issue.type === "Spelling" && issue.sentenceIndex === idx && issue.suggestion === commonMisspellings[cleanWord]
+          );
+          if (!isDuplicate) {
+            foundIssues.push({
+              type: "Spelling",
+              message: `Misspelled word: "${cleanWord}" → "${commonMisspellings[cleanWord]}"`,
+              sentence: trimmed,
+              sentenceIndex: idx,
+              suggestion: commonMisspellings[cleanWord],
+            });
+          }
         }
       });
 
@@ -162,6 +212,7 @@ export default function GrammarChecker() {
             sentence: trimmed,
             sentenceIndex: idx,
           });
+          break; // Only report once per sentence
         }
       }
 
@@ -170,6 +221,27 @@ export default function GrammarChecker() {
         foundIssues.push({
           type: "Spacing",
           message: "Missing space after punctuation",
+          sentence: trimmed,
+          sentenceIndex: idx,
+        });
+      }
+
+      // Check for common single character errors
+      if (/\ba\s+[aeiou]/i.test(trimmed)) {
+        foundIssues.push({
+          type: "Grammar",
+          message: 'Use "an" before words starting with vowel sounds',
+          sentence: trimmed,
+          sentenceIndex: idx,
+          suggestion: "an",
+        });
+      }
+
+      // Check for subject-verb agreement issues (basic)
+      if (/\b(are|is|was|were)\s+\w+\s+(are|is|was|were)\b/i.test(trimmed)) {
+        foundIssues.push({
+          type: "Grammar",
+          message: "Possible subject-verb agreement issue",
           sentence: trimmed,
           sentenceIndex: idx,
         });
@@ -193,12 +265,12 @@ export default function GrammarChecker() {
         "Paste your text into the input area",
         "Click 'Check Grammar' to analyze",
         "Review the issues found with sentence context",
-        "Make corrections as needed",
+        "Make corrections as suggested",
       ]}
       relatedTools={[
         { name: "Word Counter", path: "/tool/word-counter" },
         { name: "Case Converter", path: "/tool/case-converter" },
-        { name: "Duplicate Line Remover", path: "/tool/duplicate-remover" },
+        { name: "Lorem Ipsum Generator", path: "/tool/lorem-ipsum" },
       ]}
     >
       <div className="space-y-6">
