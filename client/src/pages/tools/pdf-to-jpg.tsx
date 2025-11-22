@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ToolWrapper } from "@/components/tool-wrapper";
 import { FileUpload } from "@/components/ui/file-upload";
 import { Button } from "@/components/ui/button";
@@ -6,14 +6,22 @@ import { Download, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Set worker path
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
-
 export default function PdfToJpg() {
   const [file, setFile] = useState<File | null>(null);
   const [processing, setProcessing] = useState(false);
   const [images, setImages] = useState<string[]>([]);
   const { toast } = useToast();
+
+  // Initialize PDF.js worker on mount
+  useEffect(() => {
+    // Use the built-in worker from pdfjs-dist
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `/pdf.worker.min.js`;
+    
+    // Fallback: if that doesn't work, try to use the CDN
+    if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+    }
+  }, []);
 
   const handleFileSelect = (selectedFile: File) => {
     setFile(selectedFile);
@@ -30,16 +38,46 @@ export default function PdfToJpg() {
       const imageUrls: string[] = [];
 
       for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-        const page = await pdf.getPage(pageNum);
-        const viewport = page.getViewport({ scale: 2 });
-        
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d')!;
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
+        try {
+          const page = await pdf.getPage(pageNum);
+          const viewport = page.getViewport({ scale: 2 });
+          
+          const canvas = document.createElement('canvas');
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          
+          const context = canvas.getContext('2d');
+          if (!context) {
+            throw new Error('Failed to get canvas context');
+          }
 
-        await page.render({ canvasContext: context, viewport }).promise;
-        imageUrls.push(canvas.toDataURL('image/jpeg', 0.95));
+          // Render page to canvas
+          const renderTask = page.render({
+            canvasContext: context,
+            viewport: viewport
+          });
+          
+          await renderTask.promise;
+          
+          // Convert canvas to JPEG with white background for transparency
+          const tempCanvas = document.createElement('canvas');
+          tempCanvas.width = canvas.width;
+          tempCanvas.height = canvas.height;
+          const tempCtx = tempCanvas.getContext('2d');
+          if (tempCtx) {
+            tempCtx.fillStyle = '#FFFFFF';
+            tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+            tempCtx.drawImage(canvas, 0, 0);
+          }
+          
+          imageUrls.push(tempCanvas.toDataURL('image/jpeg', 0.95));
+        } catch (pageError) {
+          console.error(`Error rendering page ${pageNum}:`, pageError);
+        }
+      }
+
+      if (imageUrls.length === 0) {
+        throw new Error('No pages were successfully converted');
       }
 
       setImages(imageUrls);
@@ -48,6 +86,7 @@ export default function PdfToJpg() {
         description: `Successfully converted ${imageUrls.length} page(s) to JPG.`,
       });
     } catch (error) {
+      console.error('PDF conversion error:', error);
       toast({
         title: "Conversion Failed",
         description: "There was an error converting your PDF. Please try again.",
