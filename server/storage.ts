@@ -18,3 +18,21 @@ export class MemStorage implements IStorage {
 }
 
 export const storage = new MemStorage();
+
+// Stripe payment methods storage
+export const paymentPlans = {
+  pro: {
+    id: 'pro',
+    name: 'Pro',
+    price: 200, // $2.00 in cents
+    currency: 'usd',
+    interval: 'month'
+  },
+  enterprise: {
+    id: 'enterprise',
+    name: 'Enterprise',
+    price: 500, // $5.00 in cents
+    currency: 'usd',
+    interval: 'month'
+  }
+};
