@@ -21,12 +21,32 @@ import NotFound from "@/pages/not-found";
 // Tool Pages
 import PdfToJpg from "@/pages/tools/pdf-to-jpg";
 import JpgToPdf from "@/pages/tools/jpg-to-pdf";
+import PdfMerge from "@/pages/tools/pdf-merge";
+import PdfSplit from "@/pages/tools/pdf-split";
+import PdfCompress from "@/pages/tools/pdf-compress";
+import PdfRotate from "@/pages/tools/pdf-rotate";
+import PdfProtect from "@/pages/tools/pdf-protect";
+import ImageCompress from "@/pages/tools/image-compress";
+import ImageResize from "@/pages/tools/image-resize";
+import ImageCrop from "@/pages/tools/image-crop";
+import ImageConverter from "@/pages/tools/image-converter";
+import ColorPicker from "@/pages/tools/color-picker";
+import ImageEnhancer from "@/pages/tools/image-enhancer";
 import WordCounter from "@/pages/tools/word-counter";
 import CaseConverter from "@/pages/tools/case-converter";
+import DuplicateRemover from "@/pages/tools/duplicate-remover";
+import LoremIpsum from "@/pages/tools/lorem-ipsum";
+import GrammarChecker from "@/pages/tools/grammar-checker";
 import QrCode from "@/pages/tools/qr-code";
-import ImageToText from "@/pages/tools/image-to-text";
-import PercentageCalculator from "@/pages/tools/percentage-calculator";
+import Barcode from "@/pages/tools/barcode";
 import PasswordGenerator from "@/pages/tools/password-generator";
+import UsernameGenerator from "@/pages/tools/username";
+import ImageToText from "@/pages/tools/image-to-text";
+import HtmlToPdf from "@/pages/tools/html-to-pdf";
+import PercentageCalculator from "@/pages/tools/percentage-calculator";
+import LoanCalculator from "@/pages/tools/loan-calculator";
+import GpaCalculator from "@/pages/tools/gpa-calculator";
+import ZakatCalculator from "@/pages/tools/zakat-calculator";
 import GenericTool from "@/pages/tools/generic-tool";
 
 function Router() {
@@ -45,12 +65,32 @@ function Router() {
       {/* Specific Tool Pages */}
       <Route path="/tool/pdf-to-jpg" component={PdfToJpg} />
       <Route path="/tool/jpg-to-pdf" component={JpgToPdf} />
+      <Route path="/tool/pdf-merge" component={PdfMerge} />
+      <Route path="/tool/pdf-split" component={PdfSplit} />
+      <Route path="/tool/pdf-compress" component={PdfCompress} />
+      <Route path="/tool/pdf-rotate" component={PdfRotate} />
+      <Route path="/tool/pdf-protect" component={PdfProtect} />
+      <Route path="/tool/image-compress" component={ImageCompress} />
+      <Route path="/tool/image-resize" component={ImageResize} />
+      <Route path="/tool/image-crop" component={ImageCrop} />
+      <Route path="/tool/image-converter" component={ImageConverter} />
+      <Route path="/tool/color-picker" component={ColorPicker} />
+      <Route path="/tool/image-enhancer" component={ImageEnhancer} />
       <Route path="/tool/word-counter" component={WordCounter} />
       <Route path="/tool/case-converter" component={CaseConverter} />
+      <Route path="/tool/duplicate-remover" component={DuplicateRemover} />
+      <Route path="/tool/lorem-ipsum" component={LoremIpsum} />
+      <Route path="/tool/grammar-checker" component={GrammarChecker} />
       <Route path="/tool/qr-code" component={QrCode} />
-      <Route path="/tool/image-to-text" component={ImageToText} />
-      <Route path="/tool/percentage-calculator" component={PercentageCalculator} />
+      <Route path="/tool/barcode" component={Barcode} />
       <Route path="/tool/password" component={PasswordGenerator} />
+      <Route path="/tool/username" component={UsernameGenerator} />
+      <Route path="/tool/image-to-text" component={ImageToText} />
+      <Route path="/tool/html-to-pdf" component={HtmlToPdf} />
+      <Route path="/tool/percentage-calculator" component={PercentageCalculator} />
+      <Route path="/tool/loan-calculator" component={LoanCalculator} />
+      <Route path="/tool/gpa-calculator" component={GpaCalculator} />
+      <Route path="/tool/zakat-calculator" component={ZakatCalculator} />
 
       {/* Generic Tool Page for remaining tools */}
       <Route path="/tool/:toolId" component={GenericTool} />

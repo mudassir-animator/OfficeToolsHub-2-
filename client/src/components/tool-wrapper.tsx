@@ -27,15 +27,15 @@ export function ToolWrapper({
         {/* Breadcrumb */}
         <div className="mb-8 flex items-center gap-2 text-sm text-muted-foreground">
           <Link href="/tools">
-            <a className="hover:text-foreground transition-colors" data-testid="breadcrumb-tools">
+            <span className="hover:text-foreground transition-colors cursor-pointer" data-testid="breadcrumb-tools">
               Tools
-            </a>
+            </span>
           </Link>
           <ChevronRight className="w-4 h-4" />
           <Link href={`/tools/${category}`}>
-            <a className="hover:text-foreground transition-colors capitalize" data-testid="breadcrumb-category">
+            <span className="hover:text-foreground transition-colors capitalize cursor-pointer" data-testid="breadcrumb-category">
               {category}
-            </a>
+            </span>
           </Link>
           <ChevronRight className="w-4 h-4" />
           <span className="text-foreground">{toolName}</span>

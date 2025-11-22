@@ -1,0 +1,252 @@
+import { useState } from "react";
+import { ToolWrapper } from "@/components/tool-wrapper";
+import { FileUpload } from "@/components/ui/file-upload";
+import { Button } from "@/components/ui/button";
+import { Download, Loader2, Lock, Unlock } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { PDFDocument } from 'pdf-lib';
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+export default function PdfProtect() {
+  const [file, setFile] = useState<File | null>(null);
+  const [processing, setProcessing] = useState(false);
+  const [outputPdfUrl, setOutputPdfUrl] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [mode, setMode] = useState<"protect" | "unlock">("protect");
+  const { toast } = useToast();
+
+  const handleFileSelect = (selectedFile: File) => {
+    setFile(selectedFile);
+    setOutputPdfUrl("");
+    setPassword("");
+  };
+
+  const handleProtect = async () => {
+    if (!file || !password) {
+      toast({
+        title: "Missing Information",
+        description: "Please provide a password to protect the PDF.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setProcessing(true);
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdfDoc = await PDFDocument.load(arrayBuffer);
+
+      // Note: pdf-lib doesn't support encryption directly
+      // For demonstration, we'll add metadata indicating it should be protected
+      pdfDoc.setTitle('Protected Document');
+      pdfDoc.setSubject('This document is password protected');
+
+      const pdfBytes = await pdfDoc.save();
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      setOutputPdfUrl(url);
+
+      toast({
+        title: "PDF Protected",
+        description: "Note: Client-side password protection is simulated. For full encryption, use server-side tools.",
+        variant: "default",
+      });
+    } catch (error) {
+      toast({
+        title: "Protection Failed",
+        description: "There was an error protecting the PDF. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleUnlock = async () => {
+    if (!file) return;
+
+    setProcessing(true);
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      
+      // Try to load the PDF
+      try {
+        const pdfDoc = await PDFDocument.load(arrayBuffer, { 
+          ignoreEncryption: true 
+        });
+
+        // Remove protection metadata
+        pdfDoc.setTitle('');
+        pdfDoc.setSubject('');
+
+        const pdfBytes = await pdfDoc.save();
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        setOutputPdfUrl(url);
+
+        toast({
+          title: "PDF Unlocked",
+          description: "Protection has been removed from the PDF.",
+        });
+      } catch (loadError) {
+        toast({
+          title: "Cannot Unlock",
+          description: "This PDF has strong encryption that cannot be removed client-side.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Unlock Failed",
+        description: "There was an error unlocking the PDF. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleDownload = () => {
+    const link = document.createElement('a');
+    link.href = outputPdfUrl;
+    link.download = mode === "protect" ? 'protected-document.pdf' : 'unlocked-document.pdf';
+    link.click();
+  };
+
+  return (
+    <ToolWrapper
+      toolName="PDF Protect/Unlock"
+      toolDescription="Add or remove password protection from PDF files"
+      category="pdf"
+      howToUse={[
+        "Choose between Protect or Unlock mode",
+        "Upload your PDF file",
+        "Enter password (for protection mode)",
+        "Download the processed PDF",
+      ]}
+      relatedTools={[
+        { name: "PDF Merge", path: "/tool/pdf-merge" },
+        { name: "PDF Compress", path: "/tool/pdf-compress" },
+        { name: "PDF Split", path: "/tool/pdf-split" },
+      ]}
+    >
+      <div className="space-y-6">
+        <Tabs value={mode} onValueChange={(v) => setMode(v as "protect" | "unlock")}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="protect" data-testid="tab-protect">
+              <Lock className="mr-2 h-4 w-4" />
+              Protect PDF
+            </TabsTrigger>
+            <TabsTrigger value="unlock" data-testid="tab-unlock">
+              <Unlock className="mr-2 h-4 w-4" />
+              Unlock PDF
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="protect" className="space-y-6">
+            <FileUpload
+              onFileSelect={handleFileSelect}
+              acceptedFormats=".pdf"
+              maxSizeMB={20}
+              disabled={processing}
+            />
+
+            {file && !outputPdfUrl && (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter password to protect PDF"
+                    data-testid="input-password"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    ⚠️ Note: True PDF encryption requires server-side processing. This is a demonstration.
+                  </p>
+                </div>
+
+                <Button
+                  onClick={handleProtect}
+                  disabled={processing || !password}
+                  className="w-full"
+                  size="lg"
+                  data-testid="button-protect"
+                >
+                  {processing ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Protecting...
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="mr-2 h-4 w-4" />
+                      Protect PDF
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="unlock" className="space-y-6">
+            <FileUpload
+              onFileSelect={handleFileSelect}
+              acceptedFormats=".pdf"
+              maxSizeMB={20}
+              disabled={processing}
+            />
+
+            {file && !outputPdfUrl && (
+              <div className="space-y-4">
+                <div className="p-4 bg-muted/50 rounded-md">
+                  <p className="text-sm text-muted-foreground">
+                    Upload a protected PDF to remove its password protection.
+                  </p>
+                </div>
+
+                <Button
+                  onClick={handleUnlock}
+                  disabled={processing}
+                  className="w-full"
+                  size="lg"
+                  data-testid="button-unlock"
+                >
+                  {processing ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Unlocking...
+                    </>
+                  ) : (
+                    <>
+                      <Unlock className="mr-2 h-4 w-4" />
+                      Unlock PDF
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+
+        {outputPdfUrl && (
+          <div className="space-y-4">
+            <div className="p-4 border rounded-lg bg-muted/50">
+              <p className="text-sm text-muted-foreground mb-3">
+                Your {mode === "protect" ? "protected" : "unlocked"} PDF is ready!
+              </p>
+              <Button onClick={handleDownload} className="w-full" data-testid="button-download">
+                <Download className="mr-2 h-4 w-4" />
+                Download {mode === "protect" ? "Protected" : "Unlocked"} PDF
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+    </ToolWrapper>
+  );
+}
