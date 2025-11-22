@@ -1,9 +1,22 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, CreditCard } from "lucide-react";
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Pricing() {
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [selectedPayment, setSelectedPayment] = useState<string | null>(null);
+  const { toast } = useToast();
+
   const plans = [
     {
       name: "Free",
@@ -22,7 +35,7 @@ export default function Pricing() {
     },
     {
       name: "Pro",
-      price: "$9",
+      price: "$2",
       period: "per month",
       description: "Best for professionals and businesses",
       features: [
@@ -40,8 +53,8 @@ export default function Pricing() {
     },
     {
       name: "Enterprise",
-      price: "Custom",
-      period: "contact us",
+      price: "$5",
+      period: "per month",
       description: "For teams and organizations",
       features: [
         "Everything in Pro",
@@ -53,10 +66,46 @@ export default function Pricing() {
         "SLA guarantee",
         "Volume discounts",
       ],
-      cta: "Contact Sales",
+      cta: "Go Enterprise",
       highlighted: false,
     },
   ];
+
+  const paymentMethods = [
+    { id: "visa", name: "Visa Card", icon: "💳" },
+    { id: "payoneer", name: "Payoneer", icon: "💰" },
+  ];
+
+  const handlePlanSelection = (planName: string) => {
+    if (planName === "Free") {
+      toast({
+        title: "Free Plan Activated",
+        description: "You can now access all basic tools!",
+      });
+      return;
+    }
+    setSelectedPlan(planName);
+    setSelectedPayment(null);
+  };
+
+  const handlePaymentConfirm = () => {
+    if (!selectedPayment) return;
+
+    toast({
+      title: "Payment Method Selected",
+      description: `${selectedPlan} plan with ${paymentMethods.find(p => p.id === selectedPayment)?.name}`,
+    });
+
+    // Simulate payment processing
+    setTimeout(() => {
+      toast({
+        title: "Success!",
+        description: `Your ${selectedPlan} subscription is now active.`,
+      });
+      setSelectedPlan(null);
+      setSelectedPayment(null);
+    }, 1500);
+  };
 
   return (
     <div className="min-h-screen py-12">
@@ -104,6 +153,7 @@ export default function Pricing() {
                 variant={plan.highlighted ? "default" : "outline"}
                 className="w-full mb-6"
                 size="lg"
+                onClick={() => handlePlanSelection(plan.name)}
                 data-testid={`button-${plan.name.toLowerCase()}-cta`}
               >
                 {plan.cta}
@@ -121,6 +171,69 @@ export default function Pricing() {
           ))}
         </div>
 
+        {/* Payment Method Dialog */}
+        <Dialog open={!!selectedPlan} onOpenChange={(open) => !open && setSelectedPlan(null)}>
+          <DialogContent className="max-w-md" data-testid="dialog-payment-methods">
+            <DialogHeader>
+              <DialogTitle>Select Payment Method</DialogTitle>
+              <DialogDescription>
+                Choose how you'd like to pay for your {selectedPlan} subscription
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              {paymentMethods.map((method) => (
+                <div
+                  key={method.id}
+                  onClick={() => setSelectedPayment(method.id)}
+                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                    selectedPayment === method.id
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover-elevate"
+                  }`}
+                  data-testid={`payment-method-${method.id}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="text-2xl">{method.icon}</div>
+                    <div>
+                      <p className="font-semibold">{method.name}</p>
+                      {method.id === "visa" && (
+                        <p className="text-xs text-muted-foreground">Credit/Debit Card</p>
+                      )}
+                      {method.id === "payoneer" && (
+                        <p className="text-xs text-muted-foreground">Digital Wallet</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="space-y-3 pt-4">
+              <Button
+                className="w-full"
+                onClick={handlePaymentConfirm}
+                disabled={!selectedPayment}
+                data-testid="button-confirm-payment"
+              >
+                <CreditCard className="w-4 h-4 mr-2" />
+                Proceed to Payment
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  setSelectedPlan(null);
+                  setSelectedPayment(null);
+                }}
+                data-testid="button-cancel-payment"
+              >
+                Cancel
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         {/* FAQ Section */}
         <div className="mt-20">
           <h2 className="text-3xl font-semibold text-center mb-12">
@@ -136,7 +249,7 @@ export default function Pricing() {
             <div className="space-y-2">
               <h3 className="text-lg font-semibold">What payment methods do you accept?</h3>
               <p className="text-muted-foreground">
-                We accept all major credit cards, PayPal, and bank transfers for enterprise plans.
+                We accept Visa cards and Payoneer for secure, fast payments. All transactions are processed securely.
               </p>
             </div>
             <div className="space-y-2">
