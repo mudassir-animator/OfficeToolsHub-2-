@@ -42,12 +42,22 @@ export default function ImageCompress() {
       reader.onload = (e) => {
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          canvas.width = img.width;
-          canvas.height = img.height;
+          
+          // Calculate dimensions based on quality for better compression
+          // Lower quality = smaller dimensions
+          const scaleFactor = quality < 50 ? 0.7 : quality < 75 ? 0.85 : 1;
+          canvas.width = Math.round(img.width * scaleFactor);
+          canvas.height = Math.round(img.height * scaleFactor);
 
           const ctx = canvas.getContext('2d')!;
-          ctx.drawImage(img, 0, 0);
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
+          // Convert to WebP or JPEG for better compression than PNG
+          const targetFormat = file.type === 'image/png' ? 'image/webp' : file.type;
+          const qualityValue = quality / 100;
+          
           canvas.toBlob(
             (blob) => {
               if (blob) {
@@ -63,8 +73,8 @@ export default function ImageCompress() {
               }
               setProcessing(false);
             },
-            file.type,
-            quality / 100
+            targetFormat,
+            qualityValue
           );
         };
         img.src = e.target?.result as string;

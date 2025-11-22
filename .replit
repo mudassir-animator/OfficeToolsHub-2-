@@ -15,7 +15,7 @@ localPort = 5000
 externalPort = 80
 
 [[ports]]
-localPort = 32929
+localPort = 40859
 externalPort = 3000
 
 [env]
@@ -41,6 +41,3 @@ author = "agent"
 task = "shell.exec"
 args = "npm run dev"
 waitForPort = 5000
-
-[agent]
-integrations = ["stripe:1.0.0"]

@@ -48,12 +48,13 @@ export default function PdfCompress() {
       pdfDoc.setProducer('');
       pdfDoc.setCreator('');
 
-      // Save with compression options
+      // Save with aggressive compression options
+      // useObjectStreams enables stream compression which is the main compression method
       const pdfBytes = await pdfDoc.save({
         useObjectStreams: true,
         addDefaultPage: false,
       });
-
+      
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
       
