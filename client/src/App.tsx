@@ -11,7 +11,6 @@ import { Footer } from "@/components/layout/footer";
 import Home from "@/pages/home";
 import AllTools from "@/pages/all-tools";
 import ToolCategory from "@/pages/tool-category";
-import Templates from "@/pages/templates";
 import Pricing from "@/pages/pricing";
 import Contact from "@/pages/contact";
 import Terms from "@/pages/terms";
@@ -56,7 +55,6 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/tools" component={AllTools} />
       <Route path="/tools/:category" component={ToolCategory} />
-      <Route path="/templates" component={Templates} />
       <Route path="/pricing" component={Pricing} />
       <Route path="/contact" component={Contact} />
       <Route path="/terms" component={Terms} />

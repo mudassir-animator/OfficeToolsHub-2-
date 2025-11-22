@@ -33,11 +33,6 @@ export default function Home() {
                     <ArrowRight className="ml-2 w-5 h-5" />
                   </Button>
                 </Link>
-                <Link href="/templates">
-                  <Button variant="outline" size="lg" className="text-base" data-testid="button-view-templates">
-                    View Templates
-                  </Button>
-                </Link>
               </div>
             </div>
 

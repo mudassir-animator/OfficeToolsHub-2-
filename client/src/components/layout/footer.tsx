@@ -17,7 +17,6 @@ export function Footer() {
       { name: "About Us", path: "/about" },
       { name: "Pricing", path: "/pricing" },
       { name: "Contact", path: "/contact" },
-      { name: "Templates", path: "/templates" },
     ],
     legal: [
       { name: "Terms of Service", path: "/terms" },
