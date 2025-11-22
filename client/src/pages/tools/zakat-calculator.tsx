@@ -28,6 +28,7 @@ const CURRENCIES: Record<string, CurrencyConfig> = {
 
 export default function ZakatCalculator() {
   const [currency, setCurrency] = useState<string>("USD");
+  const [nisabThreshold, setNisabThreshold] = useState<string>("");
   const [cash, setCash] = useState<string>("");
   const [goldPrice, setGoldPrice] = useState<string>("");
   const [goldGrams, setGoldGrams] = useState<string>("");
@@ -44,7 +45,8 @@ export default function ZakatCalculator() {
   const ZAKAT_RATE = 0.025; // 2.5%
 
   const currencyConfig = CURRENCIES[currency];
-  const nisabThreshold = BASE_NISAB * currencyConfig.nisabMultiplier;
+  const suggestedNisab = BASE_NISAB * currencyConfig.nisabMultiplier;
+  const userNisab = parseFloat(nisabThreshold) || 0;
 
   // Auto-calculate gold value
   const goldValue = (parseFloat(goldPrice) || 0) * (parseFloat(goldGrams) || 0);
@@ -53,6 +55,15 @@ export default function ZakatCalculator() {
   const silverValue = (parseFloat(silverPrice) || 0) * (parseFloat(silverGrams) || 0);
 
   const calculateZakat = () => {
+    if (!nisabThreshold.trim()) {
+      toast({
+        title: "Nisab Threshold Required",
+        description: "Please enter the nisab threshold value.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setProcessing(true);
 
     const totalAssets = 
@@ -65,11 +76,11 @@ export default function ZakatCalculator() {
     const totalDebts = parseFloat(debts) || 0;
     const zakatable = totalAssets - totalDebts;
 
-    if (zakatable < nisabThreshold) {
+    if (zakatable < userNisab) {
       setZakatAmount(0);
       toast({
         title: "Below Nisab Threshold",
-        description: `Your zakatable wealth (${currencyConfig.symbol}${zakatable.toFixed(2)}) is below the nisab threshold (${currencyConfig.symbol}${nisabThreshold.toFixed(2)}). No zakat is due.`,
+        description: `Your zakatable wealth (${currencyConfig.symbol}${zakatable.toFixed(2)}) is below the nisab threshold (${currencyConfig.symbol}${userNisab.toFixed(2)}). No zakat is due.`,
       });
     } else {
       const zakat = zakatable * ZAKAT_RATE;
@@ -119,6 +130,28 @@ export default function ZakatCalculator() {
               ))}
             </SelectContent>
           </Select>
+        </div>
+
+        {/* Nisab Threshold Input */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="nisab">Nisab Threshold ({currencyConfig.symbol})</Label>
+            <span className="text-xs text-muted-foreground">
+              Suggested: {currencyConfig.symbol}{suggestedNisab.toFixed(2)}
+            </span>
+          </div>
+          <Input
+            id="nisab"
+            type="number"
+            value={nisabThreshold}
+            onChange={(e) => setNisabThreshold(e.target.value)}
+            placeholder={suggestedNisab.toFixed(2)}
+            step="0.01"
+            data-testid="input-nisab"
+          />
+          <p className="text-xs text-muted-foreground">
+            Enter the nisab threshold value for your region. The suggested value is approximately based on silver rates.
+          </p>
         </div>
 
         <div className="space-y-4">
@@ -263,7 +296,7 @@ export default function ZakatCalculator() {
 
           <div className="p-4 bg-muted/50 rounded-lg text-sm space-y-2">
             <p className="text-muted-foreground">
-              <span className="font-semibold">Nisab Threshold:</span> {currencyConfig.symbol}{nisabThreshold.toFixed(2)} (based on silver)
+              <span className="font-semibold">Nisab Threshold (Your Entry):</span> {currencyConfig.symbol}{userNisab.toFixed(2)}
             </p>
             <p className="text-muted-foreground">
               <span className="font-semibold">Zakat Rate:</span> {ZAKAT_RATE * 100}% of wealth above nisab
