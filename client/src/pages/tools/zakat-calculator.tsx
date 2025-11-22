@@ -3,13 +3,36 @@ import { ToolWrapper } from "@/components/tool-wrapper";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
+interface CurrencyConfig {
+  symbol: string;
+  name: string;
+  nisabMultiplier: number; // Relative to USD
+}
+
+const CURRENCIES: Record<string, CurrencyConfig> = {
+  USD: { symbol: "$", name: "US Dollar", nisabMultiplier: 1 },
+  EUR: { symbol: "€", name: "Euro", nisabMultiplier: 0.92 },
+  GBP: { symbol: "£", name: "British Pound", nisabMultiplier: 0.79 },
+  AUD: { symbol: "A$", name: "Australian Dollar", nisabMultiplier: 1.53 },
+  CAD: { symbol: "C$", name: "Canadian Dollar", nisabMultiplier: 1.36 },
+  INR: { symbol: "₹", name: "Indian Rupee", nisabMultiplier: 83.12 },
+  PKR: { symbol: "Rs", name: "Pakistani Rupee", nisabMultiplier: 278 },
+  AED: { symbol: "د.إ", name: "UAE Dirham", nisabMultiplier: 3.67 },
+  SAR: { symbol: "﷼", name: "Saudi Riyal", nisabMultiplier: 3.75 },
+  SGD: { symbol: "S$", name: "Singapore Dollar", nisabMultiplier: 1.35 },
+};
+
 export default function ZakatCalculator() {
+  const [currency, setCurrency] = useState<string>("USD");
   const [cash, setCash] = useState<string>("");
-  const [gold, setGold] = useState<string>("");
-  const [silver, setSilver] = useState<string>("");
+  const [goldPrice, setGoldPrice] = useState<string>("");
+  const [goldGrams, setGoldGrams] = useState<string>("");
+  const [silverPrice, setSilverPrice] = useState<string>("");
+  const [silverGrams, setSilverGrams] = useState<string>("");
   const [investments, setInvestments] = useState<string>("");
   const [businessAssets, setBusinessAssets] = useState<string>("");
   const [debts, setDebts] = useState<string>("");
@@ -17,34 +40,43 @@ export default function ZakatCalculator() {
   const [processing, setProcessing] = useState(false);
   const { toast } = useToast();
 
-  const NISAB_THRESHOLD = 4455; // Approximate nisab in USD (based on silver)
+  const BASE_NISAB = 4455; // Approximate nisab in USD (based on silver)
   const ZAKAT_RATE = 0.025; // 2.5%
+
+  const currencyConfig = CURRENCIES[currency];
+  const nisabThreshold = BASE_NISAB * currencyConfig.nisabMultiplier;
+
+  // Auto-calculate gold value
+  const goldValue = (parseFloat(goldPrice) || 0) * (parseFloat(goldGrams) || 0);
+  
+  // Auto-calculate silver value
+  const silverValue = (parseFloat(silverPrice) || 0) * (parseFloat(silverGrams) || 0);
 
   const calculateZakat = () => {
     setProcessing(true);
 
     const totalAssets = 
       (parseFloat(cash) || 0) +
-      (parseFloat(gold) || 0) +
-      (parseFloat(silver) || 0) +
+      goldValue +
+      silverValue +
       (parseFloat(investments) || 0) +
       (parseFloat(businessAssets) || 0);
 
     const totalDebts = parseFloat(debts) || 0;
     const zakatable = totalAssets - totalDebts;
 
-    if (zakatable < NISAB_THRESHOLD) {
+    if (zakatable < nisabThreshold) {
       setZakatAmount(0);
       toast({
         title: "Below Nisab Threshold",
-        description: `Your zakatable wealth ($${zakatable.toFixed(2)}) is below the nisab threshold ($${NISAB_THRESHOLD}). No zakat is due.`,
+        description: `Your zakatable wealth (${currencyConfig.symbol}${zakatable.toFixed(2)}) is below the nisab threshold (${currencyConfig.symbol}${nisabThreshold.toFixed(2)}). No zakat is due.`,
       });
     } else {
       const zakat = zakatable * ZAKAT_RATE;
       setZakatAmount(zakat);
       toast({
         title: "Zakat Calculated!",
-        description: `Your zakat amount is $${zakat.toFixed(2)}.`,
+        description: `Your zakat amount is ${currencyConfig.symbol}${zakat.toFixed(2)}.`,
       });
     }
 
@@ -54,11 +86,14 @@ export default function ZakatCalculator() {
   return (
     <ToolWrapper
       toolName="Zakat Calculator"
-      toolDescription="Calculate Islamic charity (Zakat) on your wealth"
+      toolDescription="Calculate Islamic charity (Zakat) on your wealth with auto-calculated precious metals"
       category="calculators"
       howToUse={[
-        "Enter your assets (cash, gold, silver, investments, business)",
-        "Enter any outstanding debts",
+        "Select your currency (USD, EUR, GBP, AUD, CAD, INR, PKR, AED, SAR, SGD)",
+        "Enter gold/silver prices and amounts for auto-calculation of values",
+        "Or manually enter gold and silver values",
+        "Enter other assets (cash, investments, business assets)",
+        "Enter outstanding debts",
         "Click 'Calculate Zakat' to get the amount",
         "Zakat is 2.5% of wealth above nisab threshold",
       ]}
@@ -69,10 +104,28 @@ export default function ZakatCalculator() {
       ]}
     >
       <div className="space-y-6">
+        {/* Currency Selector */}
+        <div className="space-y-2">
+          <Label htmlFor="currency">Select Currency</Label>
+          <Select value={currency} onValueChange={setCurrency}>
+            <SelectTrigger id="currency" data-testid="select-currency">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.entries(CURRENCIES).map(([code, config]) => (
+                <SelectItem key={code} value={code} data-testid={`option-${code}`}>
+                  {config.symbol} {config.name} ({code})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         <div className="space-y-4">
+          {/* Cash & Savings */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="cash">Cash & Savings ($)</Label>
+              <Label htmlFor="cash">Cash & Savings ({currencyConfig.symbol})</Label>
               <Input
                 id="cash"
                 type="number"
@@ -82,30 +135,99 @@ export default function ZakatCalculator() {
                 data-testid="input-cash"
               />
             </div>
-            <div>
-              <Label htmlFor="gold">Gold Value ($)</Label>
-              <Input
-                id="gold"
-                type="number"
-                value={gold}
-                onChange={(e) => setGold(e.target.value)}
-                placeholder="0"
-                data-testid="input-gold"
-              />
+            <div className="md:col-span-1" />
+          </div>
+
+          {/* Gold Section */}
+          <div className="border rounded-lg p-4 bg-muted/30 space-y-3">
+            <h3 className="font-semibold text-sm">Gold ({currencyConfig.symbol})</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="goldPrice">Gold Price per Gram ({currencyConfig.symbol})</Label>
+                <Input
+                  id="goldPrice"
+                  type="number"
+                  value={goldPrice}
+                  onChange={(e) => setGoldPrice(e.target.value)}
+                  placeholder="0"
+                  step="0.01"
+                  data-testid="input-gold-price"
+                />
+              </div>
+              <div>
+                <Label htmlFor="goldGrams">Gold Amount (grams)</Label>
+                <Input
+                  id="goldGrams"
+                  type="number"
+                  value={goldGrams}
+                  onChange={(e) => setGoldGrams(e.target.value)}
+                  placeholder="0"
+                  step="0.01"
+                  data-testid="input-gold-grams"
+                />
+              </div>
+              <div>
+                <Label htmlFor="goldValue">Gold Value ({currencyConfig.symbol})</Label>
+                <Input
+                  id="goldValue"
+                  type="number"
+                  value={goldValue > 0 ? goldValue.toFixed(2) : "0"}
+                  readOnly
+                  placeholder="Auto-calculated"
+                  className="bg-muted"
+                  data-testid="input-gold-value"
+                />
+              </div>
             </div>
-            <div>
-              <Label htmlFor="silver">Silver Value ($)</Label>
-              <Input
-                id="silver"
-                type="number"
-                value={silver}
-                onChange={(e) => setSilver(e.target.value)}
-                placeholder="0"
-                data-testid="input-silver"
-              />
+          </div>
+
+          {/* Silver Section */}
+          <div className="border rounded-lg p-4 bg-muted/30 space-y-3">
+            <h3 className="font-semibold text-sm">Silver ({currencyConfig.symbol})</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="silverPrice">Silver Price per Gram ({currencyConfig.symbol})</Label>
+                <Input
+                  id="silverPrice"
+                  type="number"
+                  value={silverPrice}
+                  onChange={(e) => setSilverPrice(e.target.value)}
+                  placeholder="0"
+                  step="0.01"
+                  data-testid="input-silver-price"
+                />
+              </div>
+              <div>
+                <Label htmlFor="silverGrams">Silver Amount (grams)</Label>
+                <Input
+                  id="silverGrams"
+                  type="number"
+                  value={silverGrams}
+                  onChange={(e) => setSilverGrams(e.target.value)}
+                  placeholder="0"
+                  step="0.01"
+                  data-testid="input-silver-grams"
+                />
+              </div>
+              <div>
+                <Label htmlFor="silverValue">Silver Value ({currencyConfig.symbol})</Label>
+                <Input
+                  id="silverValue"
+                  type="number"
+                  value={silverValue > 0 ? silverValue.toFixed(2) : "0"}
+                  readOnly
+                  placeholder="Auto-calculated"
+                  className="bg-muted"
+                  data-testid="input-silver-value"
+                />
+              </div>
             </div>
+          </div>
+
+          {/* Other Assets */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="investments">Investments ($)</Label>
+              <Label htmlFor="investments">Investments ({currencyConfig.symbol})</Label>
               <Input
                 id="investments"
                 type="number"
@@ -116,7 +238,7 @@ export default function ZakatCalculator() {
               />
             </div>
             <div>
-              <Label htmlFor="business">Business Assets ($)</Label>
+              <Label htmlFor="business">Business Assets ({currencyConfig.symbol})</Label>
               <Input
                 id="business"
                 type="number"
@@ -127,7 +249,7 @@ export default function ZakatCalculator() {
               />
             </div>
             <div>
-              <Label htmlFor="debts">Outstanding Debts ($)</Label>
+              <Label htmlFor="debts">Outstanding Debts ({currencyConfig.symbol})</Label>
               <Input
                 id="debts"
                 type="number"
@@ -139,12 +261,15 @@ export default function ZakatCalculator() {
             </div>
           </div>
 
-          <div className="p-4 bg-muted/50 rounded-lg text-sm">
+          <div className="p-4 bg-muted/50 rounded-lg text-sm space-y-2">
             <p className="text-muted-foreground">
-              <span className="font-semibold">Nisab Threshold:</span> ${NISAB_THRESHOLD.toFixed(2)} (approximate, based on silver)
+              <span className="font-semibold">Nisab Threshold:</span> {currencyConfig.symbol}{nisabThreshold.toFixed(2)} (based on silver)
             </p>
-            <p className="text-muted-foreground mt-1">
+            <p className="text-muted-foreground">
               <span className="font-semibold">Zakat Rate:</span> {ZAKAT_RATE * 100}% of wealth above nisab
+            </p>
+            <p className="text-muted-foreground">
+              <span className="font-semibold">Selected Currency:</span> {currencyConfig.name}
             </p>
           </div>
         </div>
@@ -171,7 +296,7 @@ export default function ZakatCalculator() {
             <div className="p-6 border rounded-lg bg-primary/5 text-center">
               <p className="text-sm text-muted-foreground mb-2">Zakat Due</p>
               <p className="text-4xl font-bold text-primary" data-testid="text-zakat">
-                ${zakatAmount.toFixed(2)}
+                {currencyConfig.symbol}{zakatAmount.toFixed(2)}
               </p>
             </div>
 
