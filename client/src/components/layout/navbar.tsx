@@ -12,7 +12,6 @@ export function Navbar() {
   const navLinks = [
     { name: "Home", path: "/" },
     { name: "Tools", path: "/tools" },
-    { name: "Templates", path: "/templates" },
     { name: "Pricing", path: "/pricing" },
     { name: "Contact", path: "/contact" },
   ];
