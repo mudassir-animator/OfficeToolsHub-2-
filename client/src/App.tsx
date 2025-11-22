@@ -24,7 +24,6 @@ import PdfMerge from "@/pages/tools/pdf-merge";
 import PdfSplit from "@/pages/tools/pdf-split";
 import PdfCompress from "@/pages/tools/pdf-compress";
 import PdfRotate from "@/pages/tools/pdf-rotate";
-import PdfProtect from "@/pages/tools/pdf-protect";
 import ImageCompress from "@/pages/tools/image-compress";
 import ImageResize from "@/pages/tools/image-resize";
 import ImageCrop from "@/pages/tools/image-crop";
@@ -67,7 +66,6 @@ function Router() {
       <Route path="/tool/pdf-split" component={PdfSplit} />
       <Route path="/tool/pdf-compress" component={PdfCompress} />
       <Route path="/tool/pdf-rotate" component={PdfRotate} />
-      <Route path="/tool/pdf-protect" component={PdfProtect} />
       <Route path="/tool/image-compress" component={ImageCompress} />
       <Route path="/tool/image-resize" component={ImageResize} />
       <Route path="/tool/image-crop" component={ImageCrop} />

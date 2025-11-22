@@ -39,7 +39,7 @@ export const toolCategories: ToolCategory[] = [
     name: "PDF Tools",
     description: "Convert, merge, split, compress, and edit PDF files",
     icon: "FileText",
-    toolCount: 7,
+    toolCount: 6,
     path: "/tools/pdf",
   },
   {
@@ -138,15 +138,6 @@ export const allTools: Tool[] = [
     category: "pdf",
     path: "/tool/pdf-rotate",
     icon: "RotateCw",
-    isPro: false,
-  },
-  {
-    id: "pdf-protect",
-    name: "PDF Protect/Unlock",
-    description: "Add or remove password protection from PDFs",
-    category: "pdf",
-    path: "/tool/pdf-protect",
-    icon: "Lock",
     isPro: false,
   },
 
