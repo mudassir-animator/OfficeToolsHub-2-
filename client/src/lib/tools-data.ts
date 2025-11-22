@@ -47,7 +47,7 @@ export const toolCategories: ToolCategory[] = [
     name: "Image Tools",
     description: "Compress, resize, crop, and enhance images",
     icon: "Image",
-    toolCount: 6,
+    toolCount: 5,
     path: "/tools/image",
   },
   {
@@ -176,15 +176,6 @@ export const allTools: Tool[] = [
     category: "image",
     path: "/tool/image-converter",
     icon: "ArrowRightLeft",
-    isPro: false,
-  },
-  {
-    id: "image-color-picker",
-    name: "Image Color Picker",
-    description: "Pick colors from any image",
-    category: "image",
-    path: "/tool/image-color-picker",
-    icon: "Palette",
     isPro: false,
   },
   {
