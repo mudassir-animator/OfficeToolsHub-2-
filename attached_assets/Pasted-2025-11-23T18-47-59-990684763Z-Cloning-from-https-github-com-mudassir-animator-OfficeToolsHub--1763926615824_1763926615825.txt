@@ -1,0 +1,44 @@
+2025-11-23T18:47:59.990684763Z ==> Cloning from https://github.com/mudassir-animator/OfficeToolsHub-2-
+2025-11-23T18:48:00.574003236Z ==> Checking out commit 7adb7cdb64d2171835c90fe2ff0f0b4e62434bcf in branch main
+2025-11-23T18:48:02.063576134Z ==> Requesting Node.js version 20
+2025-11-23T18:48:02.373866894Z ==> Using Node.js version 20.19.5 via environment variable NODE_VERSION
+2025-11-23T18:48:02.398566254Z ==> Docs on specifying a Node.js version: https://render.com/docs/node-version
+2025-11-23T18:48:04.196165859Z ==> Running build command 'npm install && npm run build'...
+2025-11-23T18:48:16.792029905Z 
+2025-11-23T18:48:16.792052375Z added 642 packages, and audited 643 packages in 13s
+2025-11-23T18:48:16.792068456Z 
+2025-11-23T18:48:16.792144888Z 68 packages are looking for funding
+2025-11-23T18:48:16.792159988Z   run `npm fund` for details
+2025-11-23T18:48:16.816901779Z 
+2025-11-23T18:48:16.816918559Z 9 vulnerabilities (3 low, 5 moderate, 1 high)
+2025-11-23T18:48:16.81692248Z 
+2025-11-23T18:48:16.81692664Z To address issues that do not require attention, run:
+2025-11-23T18:48:16.8169304Z   npm audit fix
+2025-11-23T18:48:16.81693401Z 
+2025-11-23T18:48:16.81693817Z To address all issues (including breaking changes), run:
+2025-11-23T18:48:16.81694258Z   npm audit fix --force
+2025-11-23T18:48:16.8169461Z 
+2025-11-23T18:48:16.81695052Z Run `npm audit` for details.
+2025-11-23T18:48:16.961261917Z 
+2025-11-23T18:48:16.961283477Z > rest-express@1.0.0 build
+2025-11-23T18:48:16.961288407Z > vite build && esbuild server/index-prod.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/index.js
+2025-11-23T18:48:16.961296268Z 
+2025-11-23T18:48:17.142142017Z vite v5.4.20 building for production...
+2025-11-23T18:48:17.390692943Z transforming...
+2025-11-23T18:48:17.41066605Z ✓ 3 modules transformed.
+2025-11-23T18:48:17.415239789Z x Build failed in 252ms
+2025-11-23T18:48:17.41526631Z error during build:
+2025-11-23T18:48:17.41527924Z [vite]: Rollup failed to resolve import "react-router-dom" from "/opt/render/project/src/client/src/main.tsx".
+2025-11-23T18:48:17.41528403Z This is most likely unintended because it can break your application at runtime.
+2025-11-23T18:48:17.41528855Z If you do want to externalize this module explicitly add it to
+2025-11-23T18:48:17.4152926Z `build.rollupOptions.external`
+2025-11-23T18:48:17.415296071Z     at viteWarn (file:///opt/render/project/src/node_modules/vite/dist/node/chunks/dep-D_zLpgQd.js:65854:17)
+2025-11-23T18:48:17.41529968Z     at onwarn (file:///opt/render/project/src/node_modules/@vitejs/plugin-react/dist/index.js:90:7)
+2025-11-23T18:48:17.415303591Z     at onRollupWarning (file:///opt/render/project/src/node_modules/vite/dist/node/chunks/dep-D_zLpgQd.js:65884:5)
+2025-11-23T18:48:17.415306931Z     at onwarn (file:///opt/render/project/src/node_modules/vite/dist/node/chunks/dep-D_zLpgQd.js:65549:7)
+2025-11-23T18:48:17.415310781Z     at file:///opt/render/project/src/node_modules/rollup/dist/es/shared/node-entry.js:19452:13
+2025-11-23T18:48:17.415314161Z     at Object.logger [as onLog] (file:///opt/render/project/src/node_modules/rollup/dist/es/shared/node-entry.js:21178:9)
+2025-11-23T18:48:17.415318551Z     at ModuleLoader.handleInvalidResolvedId (file:///opt/render/project/src/node_modules/rollup/dist/es/shared/node-entry.js:20067:26)
+2025-11-23T18:48:17.415333891Z     at file:///opt/render/project/src/node_modules/rollup/dist/es/shared/node-entry.js:20025:26
+2025-11-23T18:48:17.47011954Z ==> Build failed 😞
+2025-11-23T18:48:17.47013365Z ==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys
