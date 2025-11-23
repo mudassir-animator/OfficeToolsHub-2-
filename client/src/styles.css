@@ -2,4 +2,5 @@
 @tailwind components;
 @tailwind utilities;
 
-/* your custom styles below */
+/* safe background mapping so 'bg-background' works */
+.bg-background { background-color: #ffffff; }
